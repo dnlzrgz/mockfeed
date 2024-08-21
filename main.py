@@ -1,10 +1,23 @@
-from random import randint
-from fastapi import FastAPI, Response
+from random import choice, randint, random
+from fastapi import FastAPI, HTTPException, Response, status
 from faker import Faker
 from fastapi.responses import HTMLResponse
 
 fake = Faker()
 app = FastAPI()
+
+
+def random_error(chance: float):
+    errors = [
+        status.HTTP_400_BAD_REQUEST,
+        status.HTTP_404_NOT_FOUND,
+        status.HTTP_405_METHOD_NOT_ALLOWED,
+        status.HTTP_408_REQUEST_TIMEOUT,
+        status.HTTP_410_GONE,
+    ]
+
+    if random() < chance:
+        raise HTTPException(status_code=choice(errors), detail="Something Bad Happened")
 
 
 def generate_random_feed(site: str, num_posts=5):
@@ -41,12 +54,16 @@ def generate_random_feed(site: str, num_posts=5):
 
 @app.get("/{site}/rss/")
 def get_rss_feed(site: str):
+    random_error(0.33)
+
     rss_feed = generate_random_feed(site, randint(3, 9))
     return Response(content=rss_feed, media_type="application/xml")
 
 
 @app.get("/{site}/blog/{slug}", response_class=HTMLResponse)
 def get_blog_post(site: str, slug: str):
+    random_error(0.33)
+
     html_content = "<p></p>".join(fake.paragraphs(nb=randint(5, 9)))
 
     return f"""<html>
